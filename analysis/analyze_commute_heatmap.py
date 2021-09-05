@@ -47,7 +47,7 @@ morning_heatmap = alt.Chart(source[source.Direction == 1]).mark_rect().encode(
 
 morning_carpool_heatmap = alt.Chart(source[source.Direction == 1]).mark_rect().encode(
     alt.X('hoursminutes(TimeStamp):O', axis=alt.Axis(), title=None),
-    alt.Y('day(TimeStamp):O', title='Home → Amgen → Work'),
+    alt.Y('day(TimeStamp):O', title='Home → Carpool → Work'),
     color=alt.Color('mean(Traffic_Time_Carpool):Q', scale=alt.Scale(scheme=colormap)), 
     tooltip = ['Date', 'Time', 'Weekday', 'Traffic_Time_Carpool', 'Time_Carpool', 'Distance_Carpool']
 ).properties(
@@ -67,7 +67,7 @@ evening_heatmap = alt.Chart(source[source.Direction == -1]).mark_rect().encode(
 
 evening_carpool_heatmap = alt.Chart(source[source.Direction == -1]).mark_rect().encode(
     alt.X('hoursminutes(TimeStamp):O', title='Commute time'),
-    alt.Y('day(TimeStamp):O', title='Work → Amgen → Home'),
+    alt.Y('day(TimeStamp):O', title='Work → Carpool → Home'),
     color=alt.Color('mean(Traffic_Time_Carpool):Q', scale=alt.Scale(scheme=colormap)), 
     tooltip = ['Date', 'Time', 'Weekday', 'Traffic_Time_Carpool', 'Time_Carpool', 'Distance_Carpool']
 ).properties(
