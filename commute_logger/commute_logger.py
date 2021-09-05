@@ -17,7 +17,7 @@ time_zone = pytz.timezone("US/Eastern")
 morning_start_time = [7, 0]
 morning_stop_time = [10, 0]
 evening_start_time = [15, 0]
-evening_stop_time = [23, 0]
+evening_stop_time = [18, 0]
 
 ## GPS coordinates in latitude and longitudes work best - you can also use street address
 ## Goto Google maps, and right click on any point. Clicking on LAT, LONG copies it to clipboard
