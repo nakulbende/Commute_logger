@@ -35,84 +35,52 @@ source = commute_data[(commute_data.Interveled == 1) & # Falls in regular intere
                       ]
 step = 20
 overlap = 5
+cmap = 'turbo'
 
-morning_ridgeline = alt.Chart(source[source.Direction == -1], height=step).transform_timeunit(
-    Weekday='day(TimeStamp)'
-).transform_joinaggregate(
-    mean_commute='mean(Traffic_Time_Direct)', groupby=['Weekday']
-).transform_bin(
-    ['bin_max', 'bin_min'], 'Traffic_Time_Direct'
-).transform_aggregate(
-    value='count()', groupby=['Weekday', 'mean_commute', 'bin_min', 'bin_max']
-).transform_impute(
-    impute='value', groupby=['Weekday', 'mean_commute'], key='bin_min', value=0
-).mark_area(
-    interpolate='monotone',
-    fillOpacity=0.5,
-    stroke='lightgray',
-    strokeWidth=0.5
-).encode(
-    alt.X('bin_min:Q', bin='binned', title='Commute time'),
-    alt.Y(
-        'value:Q',
-        scale=alt.Scale(range=[step, -step * overlap]),
-        axis=None
-    ),
-    alt.Fill(
-        'mean_commute:Q',
-        legend=None,
-        scale=alt.Scale(scheme='turbo')
-    )
-).facet(
-    row=alt.Row(
-        'day(TimeStamp):T',
-        title=None,
-        header=alt.Header(labelAngle=0, labelAlign='left', format='%a')
-    )
-).properties(
-    title='Home <> Work',
-    bounds='flush',
-)
+def direct_commute_ridgeline(data_source, plottitle, colormap):
+  altair_ridgeline = alt.Chart(data_source, height=step).transform_timeunit(
+      Weekday='day(TimeStamp)'
+  ).transform_joinaggregate(
+      mean_commute='mean(Traffic_Time_Direct)', groupby=['Weekday']
+  ).transform_bin(
+      ['bin_max', 'bin_min'], 'Traffic_Time_Direct'
+  ).transform_aggregate(
+      value='count()', groupby=['Weekday', 'mean_commute', 'bin_min', 'bin_max']
+  ).transform_impute(
+      impute='value', groupby=['Weekday', 'mean_commute'], key='bin_min', value=0
+  ).mark_area(
+      interpolate='monotone',
+      fillOpacity=0.5,
+      stroke='lightgray',
+      strokeWidth=0.5
+  ).encode(
+      alt.X('bin_min:Q', bin='binned', title='Commute time (min)'),
+      alt.Y(
+          'value:Q',
+          scale=alt.Scale(range=[step, -step * overlap]),
+          axis=None
+      ),
+      alt.Fill(
+          'mean_commute:Q',
+          legend=None,
+          scale=alt.Scale(scheme=colormap)
+      )
+  ).facet(
+      row=alt.Row(
+          'day(TimeStamp):T',
+          title=None,
+          header=alt.Header(labelAngle=0, labelAlign='left', format='%a', labelFontSize=18)
+      )
+  ).properties(
+      title=plottitle,      
+  )
+  return altair_ridgeline
 
-evening_ridgeline = alt.Chart(source[source.Direction == -1], height=step).transform_timeunit(
-    Weekday='day(TimeStamp)'
-).transform_joinaggregate(
-    mean_commute='mean(Traffic_Time_Direct)', groupby=['Weekday']
-).transform_bin(
-    ['bin_max', 'bin_min'], 'Traffic_Time_Direct'
-).transform_aggregate(
-    value='count()', groupby=['Weekday', 'mean_commute', 'bin_min', 'bin_max']
-).transform_impute(
-    impute='value', groupby=['Weekday', 'mean_commute'], key='bin_min', value=0
-).mark_area(
-    interpolate='monotone',
-    fillOpacity=0.5,
-    stroke='lightgray',
-    strokeWidth=0.5
-).encode(
-    alt.X('bin_min:Q', bin='binned', title='Commute time'),
-    alt.Y(
-        'value:Q',
-        scale=alt.Scale(range=[step, -step * overlap]),
-        axis=None
-    ),
-    alt.Fill(
-        'mean_commute:Q',
-        legend=None,
-        scale=alt.Scale(scheme='spectral')
-    )
-).facet(
-    row=alt.Row(
-        'day(TimeStamp):T',
-        title=None,
-        header=alt.Header(labelAngle=0, labelAlign='left', format='%a')
-    )
-).properties(
-    title='Work <> Home',
-    bounds='flush'
-)
 
-(morning_ridgeline).configure_facet(
+morning_ridgeline = direct_commute_ridgeline(source[source.Direction == 1], 'Home → Work', cmap)                  
+evening_ridgeline = direct_commute_ridgeline(source[source.Direction == -1], 'Work → Home', cmap)                  
+
+(morning_ridgeline | evening_ridgeline).configure_facet(
     spacing=2
 ).configure_view(
     stroke=None
