@@ -3,7 +3,7 @@ Moving? Buying/ Renting a new house? Starting a new job? Wonder what your commut
 
 This tool is a python based logger for recording commute times using Google Directions API. This script can log your commute times in morning and evening, at regular intervals.
 
-<img src="https://github.com/nakulbende/Commute_logger/blob/main/analysis/simple_heatmap.png" width="520"> <img src="https://github.com/nakulbende/Commute_logger/blob/main/analysis/analysis_ridgeline.png" width="370">
+<img src="https://github.com/nakulbende/Commute_logger/blob/main/analysis/simple_heatmap.png" width="700"> <img src="https://github.com/nakulbende/Commute_logger/blob/main/analysis/analysis_ridgeline.png" width="700">
 
 Multiple route data is recorded, including custom route for your commute defined by a set of coordinates.  
 
