@@ -78,11 +78,12 @@ USER2_WORK_NAME="University Campus"
 
 By default, the script looks at standard 9-to-5 commute times. If you work a night shift, irregular hours, or want to change the visual grouping of the data, you can edit the global variables directly in `commute_tool.py` between Lines 49 and 62.
 
+```
 * **Line 49 (`MIDDAY_SWITCH_HOUR = 12`):** The 24-hour mark where the script stops categorizing pings as "AM (Home to Work)" and starts categorizing them as "PM (Work to Home)".
 * **Lines 52-55 (`AM_WINDOW_START`, etc.):** Defines the broad hours shown on the X-axis of your dashboard.
 * **Lines 58-61 (`RUSH_AM_START`, etc.):** Defines the ultra-specific window used to calculate your worst-case "Opportunity Cost" dumbbell charts. Uses decimal time (e.g., 6.5 = 6:30 AM).
 * **Line 67 (`TIME_BIN_MINUTES = 10`):** Changes the resolution of your data. Change to 5 for highly granular charts, or 15 for broader averages.
-
+```
 ---
 
 ## 💻 5. Command Line Usage
