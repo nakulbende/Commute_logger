@@ -1,158 +1,157 @@
-# 🚗 Commute Logger & Analyzer
+# 🚗 Commute Logger & Analyzer (Advanced)
 
-A Python-based tracking and visualization tool that automatically logs your daily commute times using the Google Maps Directions API, and compiles the data into a highly interactive, dual-axis HTML dashboard.
+A comprehensive, Dockerized Python tool designed to track, log, and visualize your daily commute durations using the Google Maps Directions API.
+
+This branch features an advanced version of the Commute Logger, packing a native Streamlit web app for interactive Altair dashboards, MQTT publishing, and static PNG exports specifically tailored for Home Assistant integration.
 
 ## ✨ Features
 
-* **Automated Data Collection and Analysis:** Designed to run via Cron jobs to silently build a dense dataset of your commute times.
-* **Cost-Controlled API Pings:** Built-in daily API limits to protect your Google Cloud billing.
-* **Interactive Dashboards:** Generates a standalone HTML file featuring Altair-powered charts with tooltips, dynamically scrollable timeline to show and compare commutes by specific weeks/months.
-* **Multi-Profile Support:** Track commutes to different locations for different users within the same script.
+* **Automated Tracking:** CLI support designed to be easily triggered via cron jobs or Windows Task Scheduler.
+* **Interactive Dashboard:** A beautiful, responsive Streamlit web app to visualize commute volatility, opportunity costs, and density.
+* **Mobile Optimized:** URL parameters allow for a stacked, mobile-friendly view of the dashboard.
+* **Home Assistant Integration:** * Publishes real-time commute durations via MQTT.
+  * Generates a static, dark-mode PNG dashboard designed to be dropped directly into an HA Picture Entity card.
+* **Cost Efficient:** Built-in daily API limit tracking to ensure you don't accidentally exceed Google's free tier.
 
----
+## 🛠️ Prerequisites
 
-## 🛠️ 1. Setup & Installation
+* Docker & Docker Compose installed on your host machine.
+* A Google Maps API Key (with the Directions API enabled).
+* (Optional) An MQTT Broker (like Mosquitto) if you plan to push updates to Home Assistant.
 
-Clone the repository:
+## 🚀 Setup & Installation
+
+### 1. Clone the Repository
+
 ```bash
-git clone [https://github.com/yourusername/commute-logger.git](https://github.com/yourusername/commute-logger.git)
-cd commute-logger
+git clone -b containerized_streamlit [https://github.com/nakulbende/Commute_logger.git](https://github.com/nakulbende/Commute_logger.git)
+cd Commute_logger
 ```
 
-Install dependencies (It is recommended to use a virtual environment):
-```bash
-pip install -r requirements.txt
-```
-*(Required packages: `pandas`, `numpy`, `altair`, `requests`, `python-dotenv`, `pytz`, `pyarrow`)*
+### 2. Customize User Profiles
 
----
+By default, the script tracks commutes for two profiles: `USER1` and `USER2`.
 
-## 🗺️ 2. Google Maps API Key & Billing Failsafes
+> **💡 Tip:** Do a global Search and Replace in `commute_tool_streamlit.py` and `.env` to change `USER1` and `USER2` to your actual names. 
 
-This script relies on the Google Maps Directions API to calculate real-time traffic durations.
+### 3. Configure the Environment
 
-**Getting your API Key:**
-1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2.  Create a new project and set up a billing account. *(Refer to Google's [Billing Setup Guide](https://cloud.google.com/billing/docs/how-to/manage-billing-account) for visual steps).*
-3.  Search for and enable the **Directions API**. *(See the [Directions API Overview](https://developers.google.com/maps/documentation/directions/overview) for details).*
-4.  Generate an API Key under **APIs & Services > Credentials**. *(Detailed instructions and current UI screenshots can be found in the official [Google Maps "Get an API Key" Guide](https://developers.google.com/maps/documentation/javascript/get-api-key)).*
-
-### 💸 Billing & Failsafes (Important)
-The Directions API is a paid service, but Google currently provides a $200 monthly recurring credit for Maps APIs. A single Directions request costs roughly $0.005. To stay under the free tier, you must limit your calls to fewer than ~40,000 per month.
-
-* **Built-in Failsafe:** To prevent runaway scripts or Cron job errors from racking up a massive bill, this script includes a hardcoded failsafe.
-    * It tracks daily usage in a local `api_daily_log.json` file.
-    * If the script attempts to make more than the `DAILY_API_LIMIT` (defaulted to 150 calls per day), it will automatically block the request and shut down.
-    * *150 calls/day = ~4,500 calls/month (Well within the free tier).*
-
----
-
-## 🔐 3. Environment Variables (.env) & Coordinates
-
-Create a file named `.env` in the root directory of the project. You can track multiple users/destinations by adding their specific latitude and longitude coordinates.
+Edit the provided `.env` file and fill in your details:
 
 ```ini
-# Google API Key
-GOOGLE_MAPS_API_KEY="your_api_key_here"
+GOOGLE_MAPS_API_KEY="<your google maps api key>"
 
-# Origin (Home) Coordinates
-HOME_LAT="00.000000"
-HOME_LNG="-00.000000"
+# Home Coordinates
+HOME_LAT=19.82755297174135
+HOME_LNG=-155.47229952715006
 
-# Profile 1 Work Coordinates & Display Name
-USER1_WORK_LAT="11.111111"
-USER1_WORK_LNG="-11.111111"
-USER1_WORK_NAME="Downtown Office"
+# User 1 Work Coordinates
+USER1_WORK_NAME="Shaka Tacos"
+USER1_WORK_LAT=19.61668957555273
+USER1_WORK_LNG=-155.9817471538554
 
-# Profile 2 Work Coordinates & Display Name
-USER2_WORK_LAT="22.222222"
-USER2_WORK_LNG="-22.222222"
-USER2_WORK_NAME="University Campus"
+# User 2 Work Coordinates
+USER2_WORK_NAME="Brewhaus"
+USER2_WORK_LAT=20.02507314490416
+USER2_WORK_LNG=-155.6615087055982
+
+# Optional: Home Assistant MQTT Broker details
+MQTT_BROKER=192.168.1.XX
+MQTT_PORT=1883
+MQTT_USER=your_username
+MQTT_PASSWORD=your_password
 ```
 
-> **How to get your coordinates:** Open Google Maps on your desktop, right-click on your exact home or work building, and click the numbers at the very top of the context menu. This will instantly copy the Latitude and Longitude to your clipboard.
+### 4. Build and Run via Docker
 
----
+Bring up the container in detached mode. This will build the image, install dependencies, and start the Streamlit server.
 
-## ⚙️ 4. Configuring Script Time Windows
-
-By default, the script looks at standard 9-to-5 commute times. If you work a night shift, irregular hours, or want to change the visual grouping of the data, you can edit the global variables directly in `commute_tool.py` between Lines 49 and 62.
-
-```
-* **Line 49 (`MIDDAY_SWITCH_HOUR = 12`):** The 24-hour mark where the script stops categorizing pings as "AM (Home to Work)" and starts categorizing them as "PM (Work to Home)".
-* **Lines 52-55 (`AM_WINDOW_START`, etc.):** Defines the broad hours shown on the X-axis of your dashboard.
-* **Lines 58-61 (`RUSH_AM_START`, etc.):** Defines the ultra-specific window used to calculate your worst-case "Opportunity Cost" dumbbell charts. Uses decimal time (e.g., 6.5 = 6:30 AM).
-* **Line 67 (`TIME_BIN_MINUTES = 10`):** Changes the resolution of your data. Change to 5 for highly granular charts, or 15 for broader averages.
-```
----
-
-## 💻 5. Command Line Usage
-
-The script is executed via the command line and uses subcommands to perform different tasks.
-
-**1. Log a Commute Ping**
-Pings the API and saves the data to a local `.parquet` file.
 ```bash
-python commute_tool.py --profile User1 log
+docker-compose up -d --build
 ```
 
-**2. Generate the Dashboard**
-Compiles the Parquet data into an interactive `User1_Analysis_Report_Real.html` file.
-```bash
-python commute_tool.py --profile User1 analyze
-```
-*(Append `--demo` to generate the dashboard using a year of dense, mathematically generated fake data instead of your real database to test UI changes).*
+## 🖥️ Viewing the Dashboard
 
-**3. Export Data**
-Converts your Parquet database into a readable `.csv` for external use.
-```bash
-python commute_tool.py --profile User1 export-csv
-```
+Once the container is running, the interactive dashboard is accessible via your web browser:
 
----
+* **Desktop:** `http://<your-server-ip>:8501`
+* **Mobile (Stacked Layout):** `http://<your-server-ip>:8501/?layout=mobile`
 
-## ⏱️ 6. Automation (Cron Job Setup)
+## ⏱️ Automating the Logs
 
-To get smooth, highly accurate density plots (Violin charts), you need dense data. The script is designed to run automatically in the background every 10 minutes during your typical commuting windows.
+To actively track your commute, you need to trigger the script during your typical commuting hours. Choose the method below that matches your host OS.
 
-Open your cron table:
+### Option A: Linux / macOS (Cron)
+
+On your host machine, open your crontab:
+
 ```bash
 crontab -e
 ```
 
-Add the following rules. This example runs the script every 10 minutes, only on Monday through Friday, between 6:00 AM - 9:59 AM and 3:00 PM - 6:59 PM.
-```bash
-# AM Commute Tracking (Mon-Fri, 6 AM to 9 AM)
-*/10 6-9 * * 1-5 /absolute/path/to/your/python /absolute/path/to/commute_tool.py --profile User1 log >> /absolute/path/to/cron.log 2>&1
+Add the following lines to execute the logger inside your running Docker container. Adjust the hours to match your actual commute times and make sure to use the same names as .env file. 
 
-# PM Commute Tracking (Mon-Fri, 3 PM to 6 PM)
-*/10 15-18 * * 1-5 /absolute/path/to/your/python /absolute/path/to/commute_tool.py --profile User1 log >> /absolute/path/to/cron.log 2>&1
+```bash
+# AM Commute Tracking (Every 10 mins from 6 AM to 9 AM, Mon-Fri)                                                                                                              
+*/10 6-9 * * 1-5 docker exec commute_analyzer python commute_tool_streamlit.py --profile USER1 log >> /path/to/Commute_logger/data/commute_cron.log 2>&1                                                       
+*/10 6-9 * * 1-5 docker exec commute_analyzer python commute_tool_streamlit.py --profile USER2 log >> /path/to/Commute_logger/data/commute_cron.log 2>&1                                                         
+                                                                                                                                                                               
+# PM Commute Tracking (Every 10 mins from 3 PM to 6 PM, Mon-Fri)                                                                                                              
+*/10 15-18 * * 1-5 docker exec commute_analyzer python commute_tool_streamlit.py --profile USER1 log >> /path/to/Commute_logger/data/commute_cron.log 2>&1                                                     
+*/10 15-18 * * 1-5 docker exec commute_analyzer python commute_tool_streamlit.py --profile USER2 log >> /path/to/Commute_logger/data/commute_cron.log 2>&1
+
+# Generate the Home Assistant static PNG twice a day (10 AM and 7 PM)
+0 10,19 * * 1-5 docker exec commute_analyzer python commute_tool_streamlit.py export-ha
 ```
 
-> **Important Cron Notes:**
-> * Cron executes in a limited shell. You **must** use absolute paths to both your Python executable (especially if using a virtual environment) and the script itself.
-> * The `>> /path/to/cron.log 2>&1` appends the script's output (and any errors) to a log file so you can easily verify it is working.
+### Option B: Windows (Task Scheduler)
 
----
+On Windows, you can use Task Scheduler via the `schtasks` command. The easiest way is to create a small batch file first.
 
-## 📊 7. Understanding the Dashboard & Plots
+1. Create a file named `log_commute_user1.bat` in your project folder and add the following line:
+```bat
+docker exec commute_analyzer python commute_tool_streamlit.py --profile USER1 log >> .\data\commute_task.log 2>&1
+```
 
-The script generates a single, standalone HTML file. This dashboard is highly interactive and built using Vega-Altair.
+2. Open **Command Prompt as Administrator** and use `schtasks` to schedule the script to run repeatedly. For example, to run every 10 minutes between 6:00 AM and 9:00 AM:
+```cmd
+schtasks /create /tn "CommuteLogger_AM" /tr "C:\Path\To\Commute_logger\log_commute_user1.bat" /sc minute /mo 10 /st 06:00 /et 09:00
+```
+*(Alternatively, you can open the Task Scheduler GUI by searching for it in the Start menu to manually configure your triggers and point it to your `.bat` file).*
 
-### 🎛️ Global Interactivity
-* **The Master Timeline (Brush Filter):** At the very top of the dashboard is a bar chart showing your median commute time by week. You can click and drag to draw a "brush" over specific weeks or months. Doing this will instantly filter all the charts below it to only show data from that selected time period.
-* **Smart Tooltips:** Hover over almost any element (a heatmap block, a line point, or a dumbbell dot) to see exact metrics. The tooltips deliberately show the *Commutes Analyzed (n)* so you know exactly how many data points are driving that specific average.
+## 📂 Output Files (`/data` folder)
 
-### 📈 The Visualizations Explained
+Because we map a volume in `docker-compose.yml`, all logged data persists on your host machine inside the `./data` folder. Once the script is running and logging commutes, you will see the following files appear:
 
-**1. Density Heatmaps (AM / PM)**
-A 2D binned aggregate chart. Crucially, the color scale's exact center (the creme color) is dynamically anchored to your median commute time. AM and PM maps calculate their scales independently. Incredibly powerful to see patterns in your commute over time and find best times to leave. 
+* `commute_data_user1.parquet` / `commute_data_user2.parquet`: The core database files. Parquet format is used for fast read/write speeds and compression. You can export these to CSV via the Streamlit UI's "Data Management" tab.
+* `api_daily_log.json`: Tracks the number of Google Maps API calls made each day to ensure you don't exceed the safety limit of 150 calls/day.
+* `commute_cron.log` (or `commute_task.log`): Standard output/error text log generated by your host machine's scheduled tasks.
+* `ha_commute_dashboard.png`: The static, dark-mode image generated for Home Assistant (created when `export-ha` is run).
 
-**2. Commute Distribution (Violin Plots)**
-Visualize the probability distribution of your drive times. AM/ PM share the same scale to compare directional commutes. 
+## 🏡 Home Assistant Integration
 
-**3. Volatility Error Bands (Line Charts)**
-The solid line tracks the rolling mean. The background shading represents the Interquartile Range (IQR). It highlights where the middle 50% of your data falls, deliberately ignoring the top 25% (extreme traffic outliers) and bottom 25% (impossible lucky runs) to show you the truest standard variance.
+### 1. MQTT Sensors
 
-**4. Peak Opportunity Cost (Dumbbell Plots)**
-Plan your work from home days! Unlike the other charts which show the whole day, this explicitly filters the data down to peak hours. It plots the absolute min, mean, and max values on a unified axis, allowing you to instantly visually calculate the "opportunity cost" (in minutes) of driving on a Tuesday versus a Friday.
+Whenever a commute is logged, an MQTT payload is published to `commute/<profile_name>/latest`. You can set up MQTT sensors in your `configuration.yaml` in Home Assistant to display this data:
+
+```yaml
+mqtt:
+  sensor:
+    - name: "User 1 Commute Duration"
+      state_topic: "commute/user1/latest"
+      value_template: "{{ value_json.duration_min }}"
+      unit_of_measurement: "min"
+      icon: mdi:car
+```
+
+### 2. Static PNG Dashboard
+
+To view the generated visualizations natively in Home Assistant, map your HA `www` folder to the Docker container in your `docker-compose.yml` file under `volumes`:
+
+```yaml
+    volumes:
+      - ./data:/app/data
+      - /path/to/homeassistant/www/commute:/app/ha_export
+```
+
+Once the `export-ha` cron job runs, the PNG will be saved to your HA config. You can then add a Picture Entity card to your dashboard using the URL path `/local/commute/ha_commute_dashboard.png`.

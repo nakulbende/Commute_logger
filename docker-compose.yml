@@ -1,0 +1,11 @@
+services:
+  commute-analyzer:
+    container_name: commute_analyzer
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
